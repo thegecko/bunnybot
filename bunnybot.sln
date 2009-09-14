@@ -1,0 +1,58 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 10.00
+# Visual Studio 2008
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Utilities", "Utilities\Utilities.csproj", "{E4B7C116-505B-4DFE-8078-717C0C5945F4}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BunnyBot", "BunnyBot\BunnyBot.csproj", "{C3DF3229-3238-48B1-98FB-C998B0C40C83}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BunnyBot.Tests", "BunnyBot.Tests\BunnyBot.Tests.csproj", "{64943F15-5BD9-4A2F-99D9-59C8E6CA6E38}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{7AA2E84F-137A-450E-B9B8-CA40B233C230}"
+	ProjectSection(SolutionItems) = preProject
+		bunnybot.vsmdi = bunnybot.vsmdi
+		LocalTestRun.testrunconfig = LocalTestRun.testrunconfig
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "_Output", "_Output", "{77F414DE-FEDF-4061-8F86-90312A487BE4}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BunnyBot_Service", "BunnyBot_Service\BunnyBot_Service.csproj", "{EEB88A8F-4EF1-48C3-B6F0-F8B4FCABB12E}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BunnyBot_Console", "BunnyBot_Console\BunnyBot_Console.csproj", "{07BCFA30-C522-47B6-A9E6-7AD10A319168}"
+EndProject
+Global
+	GlobalSection(TestCaseManagementSettings) = postSolution
+		CategoryFile = bunnybot.vsmdi
+	EndGlobalSection
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{E4B7C116-505B-4DFE-8078-717C0C5945F4}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{E4B7C116-505B-4DFE-8078-717C0C5945F4}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{E4B7C116-505B-4DFE-8078-717C0C5945F4}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{E4B7C116-505B-4DFE-8078-717C0C5945F4}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C3DF3229-3238-48B1-98FB-C998B0C40C83}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C3DF3229-3238-48B1-98FB-C998B0C40C83}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C3DF3229-3238-48B1-98FB-C998B0C40C83}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C3DF3229-3238-48B1-98FB-C998B0C40C83}.Release|Any CPU.Build.0 = Release|Any CPU
+		{64943F15-5BD9-4A2F-99D9-59C8E6CA6E38}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{64943F15-5BD9-4A2F-99D9-59C8E6CA6E38}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{64943F15-5BD9-4A2F-99D9-59C8E6CA6E38}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{EEB88A8F-4EF1-48C3-B6F0-F8B4FCABB12E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{EEB88A8F-4EF1-48C3-B6F0-F8B4FCABB12E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{EEB88A8F-4EF1-48C3-B6F0-F8B4FCABB12E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{EEB88A8F-4EF1-48C3-B6F0-F8B4FCABB12E}.Release|Any CPU.Build.0 = Release|Any CPU
+		{07BCFA30-C522-47B6-A9E6-7AD10A319168}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{07BCFA30-C522-47B6-A9E6-7AD10A319168}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{07BCFA30-C522-47B6-A9E6-7AD10A319168}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{07BCFA30-C522-47B6-A9E6-7AD10A319168}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{EEB88A8F-4EF1-48C3-B6F0-F8B4FCABB12E} = {77F414DE-FEDF-4061-8F86-90312A487BE4}
+		{07BCFA30-C522-47B6-A9E6-7AD10A319168} = {77F414DE-FEDF-4061-8F86-90312A487BE4}
+	EndGlobalSection
+EndGlobal

@@ -1,0 +1,12 @@
+﻿<?xml version='1.0' encoding='utf-8'?>
+<SettingsFile xmlns="http://schemas.microsoft.com/VisualStudio/2004/01/settings" CurrentProfile="(Default)" GeneratedClassNamespace="org.theGecko.BunnyBot.Properties" GeneratedClassName="Settings">
+  <Profiles />
+  <Settings>
+    <Setting Name="org_theGecko_BunnyBot_Jokes_getJoke" Type="(Web Service URL)" Scope="Application">
+      <Value Profile="(Default)">http://www.interpressfact.net/webservices/getJoke.asmx</Value>
+    </Setting>
+    <Setting Name="org_theGecko_BunnyBot_Quote_QuoteofTheDay" Type="(Web Service URL)" Scope="Application">
+      <Value Profile="(Default)">http://www.swanandmokashi.com/HomePage/WebServices/QuoteOfTheDay.asmx</Value>
+    </Setting>
+  </Settings>
+</SettingsFile>
