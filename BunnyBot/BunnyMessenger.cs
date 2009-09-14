@@ -201,12 +201,12 @@ namespace org.theGecko.BunnyBot
 
 // names from contacts list - ContactStatusChanged or signed in/out
 // sign in/out when bunny online/offline - poll awakedness
-// tidy/class it up into library
 // wcf/windows service/web service versions
 // set image?
 // send it mp3 files to play
 // send it radio urls to play?
 
+// JOKES
 //Murphy's Laws - 7
 //Q&A - 3
 //Unnatural Laws - 18
