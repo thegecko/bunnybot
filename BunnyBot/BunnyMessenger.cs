@@ -192,7 +192,7 @@ namespace org.theGecko.BunnyBot
 		{
 			if (message.Contains("#randomname#"))
 			{
-				string[] randomNames = (Names.Length > 0) ? Names : GetContacts(PresenceStatus.Online);
+				string[] randomNames = (Names.Length > 0) ? Names : GetAvailableContacts().ToArray();
 
 				if (randomNames.Length > 0)
 				{
@@ -209,7 +209,17 @@ namespace org.theGecko.BunnyBot
 			}
 		}
 
-		private String[] GetContacts(PresenceStatus status)
+		private List<string> GetAvailableContacts()
+		{
+			List<string> contacts = GetContacts(PresenceStatus.Online);
+			contacts.AddRange(GetContacts(PresenceStatus.Away));
+			contacts.AddRange(GetContacts(PresenceStatus.Busy));
+			contacts.AddRange(GetContacts(PresenceStatus.Idle));
+
+			return contacts;
+		}
+
+		private List<string> GetContacts(PresenceStatus status)
 		{
 			List<string> contacts = new List<string>();
 
@@ -221,7 +231,7 @@ namespace org.theGecko.BunnyBot
 				}
 			}
 
-			return contacts.ToArray();
+			return contacts;
  		}
 
 		private void CheckJoke(ref string message)
