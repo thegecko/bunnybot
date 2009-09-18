@@ -31,7 +31,6 @@ namespace org.theGecko.BunnyBot
            		{
            			Message = SettingsUtil.Instance.GetSetting("MSNMessage"),
            			DefaultVoice = SettingsUtil.Instance.GetSetting("DefaultVoice", "UK-Penelope"),
-           			Names = SettingsUtil.Instance.GetSetting("RandomNames").Split(','),
            			Templates = new Dictionary<string, string>()
            		};
 

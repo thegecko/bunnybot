@@ -13,7 +13,6 @@ namespace org.theGecko.BunnyBot_Console
 			{
 				bunny.Message = SettingsUtil.Instance.GetSetting("MSNMessage");
 				bunny.DefaultVoice = SettingsUtil.Instance.GetSetting("DefaultVoice", "UK-Penelope");
-				bunny.Names = SettingsUtil.Instance.GetSetting("RandomNames").Split(',');
 				bunny.Templates = new Dictionary<string, string>();
 
 				string[] templates = SettingsUtil.Instance.GetSetting("MessageTemplates").Split(',');

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Text.RegularExpressions;
 using System.Threading;
 using MSNPSharp;
 using Q42.Wheels.Api.Nabaztag;
@@ -68,11 +69,14 @@ namespace org.theGecko.BunnyBot
 			Name = _bunny.Name;
 			DefaultVoice = "UK-Penelope";
 			SleepMessage = "#bunnyname# is asleep";
+			Names = new string[0];
 
 			foreach (string language in _bunny.GetSupportedLanguages())
 			{
 				_voices.AddRange(_bunny.GetSupportedVoices(language));
 			}
+
+			Console.WriteLine("Loaded {0} voices", _voices.Count);
 		}
 
 		#region Overridden Event Handlers
@@ -135,18 +139,6 @@ namespace org.theGecko.BunnyBot
 
 		#endregion
 
-		public override void Start()
-		{
-			if (!_messenger.Connected)
-			{
-				Console.WriteLine("Loaded {0} voices", _voices.Count);
-				Console.WriteLine("Loaded {0} random names", Names.Length);
-				Console.WriteLine("Loaded {0} message templates", Templates.Count);
-			}
-
-			base.Start();
-		}
-
 		public void SendMessage(string message)
 		{
 			string voice = GetVoice(ref message);
@@ -200,7 +192,13 @@ namespace org.theGecko.BunnyBot
 		{
 			if (message.Contains("#randomname#"))
 			{
-				message = message.Replace("#randomname#", Names[new Random().Next(Names.Length)]);
+				string[] randomNames = (Names.Length > 0) ? Names : GetContacts(PresenceStatus.Online);
+
+				if (randomNames.Length > 0)
+				{
+					message = message.Replace("#randomname#", randomNames[new Random().Next(randomNames.Length)]);
+				}
+
 				Console.WriteLine("Random name detected: {0}", message);
 			}
 
@@ -210,6 +208,21 @@ namespace org.theGecko.BunnyBot
 				Console.WriteLine("Bunny name detected: {0}", message);
 			}
 		}
+
+		private String[] GetContacts(PresenceStatus status)
+		{
+			List<string> contacts = new List<string>();
+
+			foreach (Contact contact in _messenger.ContactList.All)
+			{
+				if (contact.Status == status)
+				{
+					contacts.Add(Regex.Replace(contact.Name, @"[^A-Za-z0-9]", ""));
+				}
+			}
+
+			return contacts.ToArray();
+ 		}
 
 		private void CheckJoke(ref string message)
 		{
@@ -236,7 +249,6 @@ namespace org.theGecko.BunnyBot
 // more #random.. settings
 // horroscopes/quotes
 // #timer#
-// names from contacts list - ContactStatusChanged or signed in/out
 // wcf/web service versions
 
 // set image?
