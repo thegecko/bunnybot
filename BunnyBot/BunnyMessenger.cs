@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Threading;
 using MSNPSharp;
 using Q42.Wheels.Api.Nabaztag;
 
@@ -9,6 +10,7 @@ namespace org.theGecko.BunnyBot
 	{
 		private readonly NabaztagApi _bunny;
 		private readonly List<String> _voices = new List<string>();
+		private bool _threadRunning;
 
 		#region Properties
 
@@ -104,11 +106,43 @@ namespace org.theGecko.BunnyBot
 
 		#endregion
 
+		#region Threading
+
+		public void StartThread()
+		{
+			_threadRunning = true;
+
+			while (_threadRunning)
+			{
+				if (_bunny.IsSleeping)
+				{
+					Stop();
+				}
+				else
+				{
+					Start();
+				}
+
+				Thread.Sleep(30000);
+			}
+		}
+
+		public void StopThread()
+		{
+			_threadRunning = false;
+			Stop();
+		}
+
+		#endregion
+
 		public override void Start()
 		{
-			Console.WriteLine("Loaded {0} voices", _voices.Count);
-			Console.WriteLine("Loaded {0} random names", Names.Length);
-			Console.WriteLine("Loaded {0} message templates", Templates.Count);
+			if (!_messenger.Connected)
+			{
+				Console.WriteLine("Loaded {0} voices", _voices.Count);
+				Console.WriteLine("Loaded {0} random names", Names.Length);
+				Console.WriteLine("Loaded {0} message templates", Templates.Count);
+			}
 
 			base.Start();
 		}
@@ -199,9 +233,12 @@ namespace org.theGecko.BunnyBot
 	}
 }
 
+// more #random.. settings
+// horroscopes/quotes
+// #timer#
 // names from contacts list - ContactStatusChanged or signed in/out
-// sign in/out when bunny online/offline - poll awakedness
-// wcf/windows service/web service versions
+// wcf/web service versions
+
 // set image?
 // send it mp3 files to play
 // send it radio urls to play?

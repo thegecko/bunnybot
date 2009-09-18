@@ -6,7 +6,7 @@ namespace org.theGecko.BunnyBot
 {
 	public class MessengerWrapper : IDisposable
 	{
-		private readonly Messenger _messenger;
+		protected readonly Messenger _messenger;
 
 		protected string _name;
 		protected string _message;
@@ -23,10 +23,10 @@ namespace org.theGecko.BunnyBot
 		public MessengerWrapper(string msnUsername, string msnPassword)
 		{
 			_messenger = new Messenger
-			             	{
-			             		Nameserver = {AutoSynchronize = true},
-			             		Credentials = new Credentials(msnUsername, msnPassword, MsnProtocol.MSNP15)
-			             	};
+         		{
+         			Nameserver = {AutoSynchronize = true},
+         			Credentials = new Credentials(msnUsername, msnPassword, MsnProtocol.MSNP15)
+         		};
 
 			_messenger.NameserverProcessor.ConnectionEstablished += NameserverProcessorConnectionEstablished;
 			_messenger.NameserverProcessor.ConnectionClosed += NameserverProcessorConnectionClosed;
@@ -59,7 +59,10 @@ namespace org.theGecko.BunnyBot
 
 		public virtual void Start()
 		{
-			_messenger.Connect();
+			if (!_messenger.Connected)
+			{
+				_messenger.Connect();
+			}
 		}
 
 		public virtual void Stop()

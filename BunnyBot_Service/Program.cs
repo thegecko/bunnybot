@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ServiceProcess;
 using org.theGecko.BunnyBot;
 using org.theGecko.Utilities;
 
@@ -9,25 +10,25 @@ namespace org.theGecko.BunnyBot_Service
 	{
 		static void Main(string[] args)
 		{
-			using (BunnyMessenger bunny = new BunnyMessenger(SettingsUtil.Instance.GetSetting("SerialID"), SettingsUtil.Instance.GetSetting("TokenID"), SettingsUtil.Instance.GetSetting("MSNUsername"), SettingsUtil.Instance.GetSetting("MSNPassword")))
+			BunnyService bunnyService = new BunnyService();
+
+			if (Environment.UserInteractive)
 			{
-				bunny.Message = SettingsUtil.Instance.GetSetting("MSNMessage");
-				bunny.Names = SettingsUtil.Instance.GetSetting("RandomNames").Split(',');
-				bunny.Templates = new Dictionary<string, string>();
-
-				string[] templates = SettingsUtil.Instance.GetSetting("MessageTemplates").Split(',');
-
-				foreach (string template in templates)
-				{
-					bunny.Templates.Add(template, SettingsUtil.Instance.GetSetting(template + "Message"));
-				}
-
-				bunny.Start();
+				bunnyService.StartService();
 
 				Console.WriteLine("Press any key to exit");
 				Console.ReadKey();
+			
+				bunnyService.StopService();
+			}
+			else
+			{
+				ServiceBase[] services = new ServiceBase[]
+                 	{
+                 		bunnyService
+                 	};
 
-				bunny.Stop();
+				ServiceBase.Run(services);
 			}
 		}
 	}
