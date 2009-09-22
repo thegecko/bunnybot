@@ -118,13 +118,20 @@ namespace org.theGecko.BunnyBot
 
 			while (_threadRunning)
 			{
-				if (_bunny.IsSleeping)
+				try
 				{
-					Stop();
+					if (_bunny.IsSleeping)
+					{
+						Stop();
+					}
+					else
+					{
+						Start();
+					}
 				}
-				else
+				catch (Exception e)
 				{
-					Start();
+					Console.WriteLine("Error polling bunny: {0}", e.Message);
 				}
 
 				Thread.Sleep(30000);
@@ -256,6 +263,8 @@ namespace org.theGecko.BunnyBot
 	}
 }
 
+// pluggable messaging system
+// add logging
 // more #random.. settings
 // horroscopes/quotes
 // #timer#
