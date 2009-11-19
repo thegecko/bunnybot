@@ -1,12 +1,14 @@
 ﻿using System;
 using System.Threading;
+using log4net;
 using MSNPSharp;
 
 namespace org.theGecko.BunnyBot
 {
 	public class MessengerWrapper : IDisposable
 	{
-		protected readonly Messenger _messenger;
+        private static readonly ILog Log = LogManager.GetLogger(typeof(MessengerWrapper));
+        protected readonly Messenger _messenger;
 
 		protected string _name;
 		protected string _message;
@@ -77,27 +79,27 @@ namespace org.theGecko.BunnyBot
 
 		protected virtual void MessengerException(object sender, ExceptionEventArgs e)
 		{
-			Console.WriteLine("Messenger exception: {0}", e.Exception.Message);
+		    Log.Error("Messenger exception", e.Exception);
 		}
 
 		protected virtual void MessengerError(object sender, MSNErrorEventArgs e)
 		{
-			Console.WriteLine("Messenger error: {0}", e.MSNError);
+            Log.Error(string.Format("Messenger error: {0}", e.MSNError));
 		}
 
 		protected virtual void OperationFailed(object sender, ServiceOperationFailedEventArgs e)
 		{
-			Console.WriteLine("Operation failed: {0}", e.Exception.Message);
+            Log.Warn("Operation failed", e.Exception);
 		}
 
 		protected virtual void NameserverProcessorConnectionEstablished(object sender, EventArgs e)
 		{
-			Console.WriteLine("Connection established");
+            Log.Debug("Connection established");
 		}
 
 		protected virtual void NameserverProcessorConnectionClosed(object sender, EventArgs e)
 		{
-			Console.WriteLine("Connection closed");
+            Log.Debug("Connection closed");
 		}
 
 		protected virtual void OwnerScreenNameChanged(object sender, EventArgs e)
@@ -105,7 +107,7 @@ namespace org.theGecko.BunnyBot
 			if (!string.IsNullOrEmpty(_name))
 			{
 				_messenger.Owner.Name = _name;
-				Console.WriteLine("Name set to: {0}", _messenger.Owner.Name);
+                Log.Debug(string.Format("Name set to: {0}", _messenger.Owner.Name));
 			}
 		}
 
@@ -114,40 +116,40 @@ namespace org.theGecko.BunnyBot
 			if (!string.IsNullOrEmpty(_message))
 			{
 				_messenger.Owner.PersonalMessage.Message = _message;
-				Console.WriteLine("Message set to: {0}", _messenger.Owner.PersonalMessage.Message);
+                Log.Debug(string.Format("Message set to: {0}", _messenger.Owner.PersonalMessage.Message));
 			}
 		}
 
 		protected virtual void NameserverSignedIn(object sender, EventArgs e)
 		{
 			_messenger.Owner.Status = PresenceStatus.Online;
-			Console.WriteLine("Signed in as: {0}", _messenger.Owner.Name);
+            Log.Info(string.Format("Signed in as: {0}", _messenger.Owner.Name));
 		}
 
 		protected virtual void NameserverSignedOff(object sender, SignedOffEventArgs e)
 		{
-			Console.WriteLine("Signed out");
+            Log.Info("Signed out");
 		}
 
 		protected virtual void ContactServiceReverseAdded(object sender, ContactEventArgs e)
 		{
 			_messenger.Nameserver.ContactService.AddNewContact(e.Contact.Mail);
-			Console.WriteLine("{0} added to contacts", e.Contact.Mail);
+            Log.Info(string.Format("{0} added to contacts", e.Contact.Mail));
 		}
 
 		protected virtual void NameserverContactOnline(object sender, ContactEventArgs e)
 		{
-			Console.WriteLine("{0}: Online", e.Contact.Mail);
+            Log.Debug(string.Format("{0}: Online", e.Contact.Mail));
 		}
 
 		protected virtual void NameserverContactOffline(object sender, ContactEventArgs e)
 		{
-			Console.WriteLine("{0}: Offline", e.Contact.Mail);
+            Log.Debug(string.Format("{0}: Offline", e.Contact.Mail));
 		}
 
 		protected virtual void NameserverContactStatusChanged(object sender, ContactStatusChangeEventArgs e)
 		{
-			Console.WriteLine("{0}: {1} -> {2}", e.Contact.Mail, e.OldStatus, e.Contact.Status);
+            Log.Debug(string.Format("{0}: {1} -> {2}", e.Contact.Mail, e.OldStatus, e.Contact.Status));
 		}
 
 		protected virtual void MessengerConversationCreated(object sender, ConversationCreatedEventArgs e)
@@ -157,12 +159,12 @@ namespace org.theGecko.BunnyBot
 
 		protected virtual void SwitchboardTextMessageReceived(object sender, TextMessageEventArgs e)
 		{
-			Console.WriteLine("{0}: {1}", e.Sender.Mail, e.Message.Text);
+            Log.Info(string.Format("{0}: {1}", e.Sender.Mail, e.Message.Text));
 		}
 
 		protected virtual void OimServiceOimReceived(object sender, OIMReceivedEventArgs e)
 		{
-			Console.WriteLine("{0}: {1}", e.Email, e.Message);
+            Log.Info(string.Format("{0}: {1}", e.Email, e.Message));
 		}
 	
 		#endregion
@@ -172,7 +174,7 @@ namespace org.theGecko.BunnyBot
 		public void Dispose()
 		{
 			Stop();
-			Console.WriteLine("Disposed");
+            Log.Debug("Disposed");
 			Thread.Sleep(500);
 		}
 

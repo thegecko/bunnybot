@@ -4,18 +4,25 @@ using System.Text.RegularExpressions;
 using System.Threading;
 using MSNPSharp;
 using Q42.Wheels.Api.Nabaztag;
+using log4net;
 
 namespace org.theGecko.BunnyBot
 {
 	public class BunnyMessenger : MessengerWrapper
-	{
+    {
+        #region Variables
+
+        private static readonly ILog Log = LogManager.GetLogger(typeof(BunnyMessenger));
+        private readonly string[] _templates = new[] { "#{0}#", "#{0}" };
 		private readonly NabaztagApi _bunny;
 		private readonly List<String> _voices = new List<string>();
 		private bool _threadRunning;
 
-		#region Properties
+        #endregion
 
-		public string Name
+        #region Properties
+
+        public string Name
 		{
 			get
 			{
@@ -76,7 +83,7 @@ namespace org.theGecko.BunnyBot
 				_voices.AddRange(_bunny.GetSupportedVoices(language));
 			}
 
-			Console.WriteLine("Loaded {0} voices", _voices.Count);
+            Log.Debug(string.Format("Loaded {0} voices", _voices.Count));
 		}
 
 		#region Overridden Event Handlers
@@ -131,7 +138,7 @@ namespace org.theGecko.BunnyBot
 				}
 				catch (Exception e)
 				{
-					Console.WriteLine("Error polling bunny: {0}", e.Message);
+                    Log.Error("Error polling bunny", e);
 				}
 
 				Thread.Sleep(30000);
@@ -155,19 +162,17 @@ namespace org.theGecko.BunnyBot
 		private string GetVoice(ref string message)
 		{
 			string result = DefaultVoice;
-			string voice;
 
-			foreach (string supportedVoice in _voices)
+            foreach (string supportedVoice in _voices)
 			{
-				voice = "#" + supportedVoice.ToLower() + "#";
-				if (message.Contains(voice))
-				{
-					message = message.Replace(voice, string.Empty);
+                if (MessageContainsTemplate(message, supportedVoice))
+                {
+                    ReplaceMessageTemplate(ref message, supportedVoice, string.Empty);
 					result = supportedVoice;
 				}
 			}
 
-			Console.WriteLine("Voice set to: {0}", result);
+            Log.Debug(string.Format("Voice set to: {0}", result));
 
 			return result;
 		}
@@ -182,38 +187,34 @@ namespace org.theGecko.BunnyBot
 
 		private void CheckTemplates(ref string message)
 		{
-			string template;
 			foreach (string messageTemplate in Templates.Keys)
 			{
-				template = "#" + messageTemplate.ToLower() + "#";
-				if (message.Contains(template))
-				{
-					string templateMessage = Templates[messageTemplate];
-					message = message.Replace(template, templateMessage);
-					Console.WriteLine("{0} detected: {1}", messageTemplate, message);
+                if (MessageContainsTemplate(message, messageTemplate))
+                {
+                    ReplaceMessageTemplate(ref message, messageTemplate, Templates[messageTemplate]);
+                    Log.Debug(string.Format("{0} detected: {1}", messageTemplate, message));
 				}
 			}
 		}
 
 		private void CheckNames(ref string message)
 		{
-			if (message.Contains("#randomname#"))
-			{
-				string[] randomNames = (Names.Length > 0) ? Names : GetAvailableContacts().ToArray();
+            if (MessageContainsTemplate(message, "randomname"))
+            {
+                string[] randomNames = (Names.Length > 0) ? Names : GetAvailableContacts().ToArray();
 
-				if (randomNames.Length > 0)
-				{
-					message = message.Replace("#randomname#", randomNames[new Random().Next(randomNames.Length)]);
-				}
+                if (randomNames.Length > 0)
+                {
+                    ReplaceMessageTemplate(ref message, "randomname", randomNames[new Random().Next(randomNames.Length)]);
+                    Log.Debug(string.Format("Random name detected: {0}", message));
+                }                
+            }
 
-				Console.WriteLine("Random name detected: {0}", message);
-			}
-
-			if (message.Contains("#bunnyname#"))
-			{
-				message = message.Replace("#bunnyname#", Name);
-				Console.WriteLine("Bunny name detected: {0}", message);
-			}
+            if (MessageContainsTemplate(message, "bunnyname"))
+            {
+                ReplaceMessageTemplate(ref message, "bunnyname", Name);
+                Log.Debug(string.Format("Bunny name detected: {0}", message));
+            }
 		}
 
 		private List<string> GetAvailableContacts()
@@ -241,15 +242,39 @@ namespace org.theGecko.BunnyBot
 			return contacts;
  		}
 
-		private void CheckJoke(ref string message)
-		{
-			if (message.Contains("#joke#"))
-			{
-				string jokeMessage = new Jokes.getJoke().CallgetJoke("6");
-				message = message.Replace("#joke#", jokeMessage);
-				Console.WriteLine("Joke message detected: {0}", message);
-			}
-		}
+        private void CheckJoke(ref string message)
+        {
+            if (MessageContainsTemplate(message, "joke"))
+            {
+                string jokeMessage = new Jokes.getJoke().CallgetJoke("6");
+                ReplaceMessageTemplate(ref message, "joke", jokeMessage);
+                Log.Debug(string.Format("Joke message detected: {0}", message));
+            }
+        }
+
+	    private bool MessageContainsTemplate(string message, string messageTemplate)
+        {
+            bool found = false;
+
+            foreach (string template in _templates)
+            {
+                if (message.Contains(string.Format(template, messageTemplate.ToLower())))
+                {
+                    found = true;
+                    break;
+                }
+            }
+
+            return found;
+        }
+
+        private void ReplaceMessageTemplate(ref string message, string messageTemplate, string templateMessage)
+        {
+            foreach (string template in _templates)
+            {
+                message = message.Replace(string.Format(template, messageTemplate.ToLower()), templateMessage);
+            }
+        }
 
 		//private void CheckQuote(ref string message)
 		//{
@@ -257,7 +282,7 @@ namespace org.theGecko.BunnyBot
 		//    {
 		//        string quoteMessage = new Jokes.getJoke().CallgetJoke("0");
 		//        message = message.Replace("#quote#", quoteMessage);
-		//        Console.WriteLine("Quote message detected: {0}", message);
+        //        Log.Debug(string.Format("Quote message detected: {0}", message));
 		//    }
 		//}
 	}
