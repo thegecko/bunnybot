@@ -1,8 +1,7 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.ServiceProcess;
+using log4net.Config;
 using org.theGecko.BunnyBot;
-using org.theGecko.Utilities;
 
 namespace org.theGecko.BunnyBot_Service
 {
@@ -10,6 +9,8 @@ namespace org.theGecko.BunnyBot_Service
 	{
 		static void Main(string[] args)
 		{
+            XmlConfigurator.Configure();
+
 			BunnyService bunnyService = new BunnyService();
 
 			if (Environment.UserInteractive)

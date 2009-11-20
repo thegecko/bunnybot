@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using log4net.Config;
 using org.theGecko.BunnyBot;
 using org.theGecko.Utilities;
 
@@ -9,6 +10,8 @@ namespace org.theGecko.BunnyBot_Console
 	{
 		static void Main(string[] args)
 		{
+            XmlConfigurator.Configure();
+
 			using (BunnyMessenger bunny = new BunnyMessenger(SettingsUtil.Instance.GetSetting("SerialID"), SettingsUtil.Instance.GetSetting("TokenID"), SettingsUtil.Instance.GetSetting("MSNUsername"), SettingsUtil.Instance.GetSetting("MSNPassword")))
 			{
 				bunny.Message = SettingsUtil.Instance.GetSetting("MSNMessage");
