@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Text.RegularExpressions;
 using System.Threading;
 using MSNPSharp;
+using org.theGecko.Utilities;
 using Q42.Wheels.Api.Nabaztag;
 using log4net;
 
@@ -13,7 +14,7 @@ namespace org.theGecko.BunnyBot
         #region Variables
 
         private static readonly ILog Log = LogManager.GetLogger(typeof(BunnyMessenger));
-        private readonly string[] _templates = new[] { "#{0}#", "#{0}" };
+        private readonly string[] _searchTemplates = new[] { "#{0}#", "#{0}" };
 		private readonly NabaztagApi _bunny;
 		private readonly List<String> _voices = new List<string>();
 		private bool _threadRunning;
@@ -51,9 +52,21 @@ namespace org.theGecko.BunnyBot
 			get; set;
 		}
 
-		public Dictionary<String, String> Templates
+		public Dictionary<String, String> MessageTemplates
 		{
-			get; set;
+			get
+			{
+                Dictionary<string, string> messageTemplates = new Dictionary<string, string>();
+
+                string[] templates = SettingsUtil.Instance.GetSetting("MessageTemplates").Split(',');
+
+                foreach (string template in templates)
+                {
+                    messageTemplates.Add(template, SettingsUtil.Instance.GetSetting(template + "Message"));
+                }
+
+			    return messageTemplates;
+			}
 		}
 
 		public String DefaultVoice
@@ -68,8 +81,7 @@ namespace org.theGecko.BunnyBot
 
 		#endregion
 
-		public BunnyMessenger(string serialId, string tokenId, string msnUsername, string msnPassword)
-			: base(msnUsername, msnPassword)
+		public BunnyMessenger(string serialId, string tokenId, string msnUsername, string msnPassword) : base(msnUsername, msnPassword)
 		{
 			_bunny = new NabaztagApi(serialId, tokenId);
 			
@@ -77,6 +89,9 @@ namespace org.theGecko.BunnyBot
 			DefaultVoice = "UK-Penelope";
 			SleepMessage = "#bunnyname# is asleep";
 			Names = new string[0];
+
+            Message = SettingsUtil.Instance.GetSetting("MSNMessage");
+            DefaultVoice = SettingsUtil.Instance.GetSetting("DefaultVoice", "UK-Penelope");
 
 			foreach (string language in _bunny.GetSupportedLanguages())
 			{
@@ -187,11 +202,11 @@ namespace org.theGecko.BunnyBot
 
 		private void CheckTemplates(ref string message)
 		{
-			foreach (string messageTemplate in Templates.Keys)
+			foreach (string messageTemplate in MessageTemplates.Keys)
 			{
                 if (MessageContainsTemplate(message, messageTemplate))
                 {
-                    ReplaceMessageTemplate(ref message, messageTemplate, Templates[messageTemplate]);
+                    ReplaceMessageTemplate(ref message, messageTemplate, MessageTemplates[messageTemplate]);
                     Log.Debug(string.Format("{0} detected: {1}", messageTemplate, message));
 				}
 			}
@@ -256,7 +271,7 @@ namespace org.theGecko.BunnyBot
         {
             bool found = false;
 
-            foreach (string template in _templates)
+            foreach (string template in _searchTemplates)
             {
                 if (message.Contains(string.Format(template, messageTemplate.ToLower())))
                 {
@@ -270,7 +285,7 @@ namespace org.theGecko.BunnyBot
 
         private void ReplaceMessageTemplate(ref string message, string messageTemplate, string templateMessage)
         {
-            foreach (string template in _templates)
+            foreach (string template in _searchTemplates)
             {
                 message = message.Replace(string.Format(template, messageTemplate.ToLower()), templateMessage);
             }
