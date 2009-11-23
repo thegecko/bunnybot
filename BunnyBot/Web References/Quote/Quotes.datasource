@@ -6,5 +6,5 @@
     cause the file to be unrecognizable by the program.
 -->
 <GenericObjectDataSource DisplayName="Quotes" Version="1.0" xmlns="urn:schemas-microsoft-com:xml-msdatasource">
-   <TypeInfo>org.theGecko.BunnyBot.Quote.Quotes</TypeInfo>
+   <TypeInfo>org.theGecko.BunnyBot.Quote.Quotes, Web References.Quote.Reference.cs, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null</TypeInfo>
 </GenericObjectDataSource>

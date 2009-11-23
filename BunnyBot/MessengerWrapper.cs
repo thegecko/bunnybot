@@ -6,20 +6,34 @@ using MSNPSharp;
 namespace org.theGecko.BunnyBot
 {
 	public class MessengerWrapper : IDisposable
-	{
+    {
+        #region Variables
+
         private static readonly ILog Log = LogManager.GetLogger(typeof(MessengerWrapper));
         protected readonly Messenger _messenger;
 
-		protected string _name;
-		protected string _message;
+        #endregion
 
-		#region Constructors
+        #region Properties
 
-		public MessengerWrapper(string msnUsername, string msnPassword, string name, string message)
-			: this(msnUsername, msnPassword)
+	    public virtual string MsnName
+	    {
+            get; set;
+	    }
+
+        public virtual string MsnMessage
+        {
+            get; set;
+        }
+
+	    #endregion
+
+        #region Constructors
+
+        public MessengerWrapper(string msnUsername, string msnPassword, string name, string message) : this(msnUsername, msnPassword)
 		{
-			_name = name;
-			_message = message;
+			MsnName = name;
+			MsnMessage = message;
 		}
 
 		public MessengerWrapper(string msnUsername, string msnPassword)
@@ -104,18 +118,18 @@ namespace org.theGecko.BunnyBot
 
 		protected virtual void OwnerScreenNameChanged(object sender, EventArgs e)
 		{
-			if (!string.IsNullOrEmpty(_name))
+			if (!string.IsNullOrEmpty(MsnName))
 			{
-				_messenger.Owner.Name = _name;
+                _messenger.Owner.Name = MsnName;
                 Log.Debug(string.Format("Name set to: {0}", _messenger.Owner.Name));
 			}
 		}
 
 		protected virtual void OwnerPersonalMessageChanged(object sender, EventArgs e)
 		{
-			if (!string.IsNullOrEmpty(_message))
+			if (!string.IsNullOrEmpty(MsnMessage))
 			{
-				_messenger.Owner.PersonalMessage.Message = _message;
+                _messenger.Owner.PersonalMessage.Message = MsnMessage;
                 Log.Debug(string.Format("Message set to: {0}", _messenger.Owner.PersonalMessage.Message));
 			}
 		}

@@ -9,6 +9,18 @@ using log4net;
 
 namespace org.theGecko.BunnyBot
 {
+    /// <summary>
+    /// Ideas:
+    /// ------
+    /// pluggable messaging system
+    /// more #random.. settings
+    /// horroscopes
+    /// #timer# for tea brewing
+    /// wcf/web service versions
+    /// set image
+    /// send it mp3 files to play
+    /// send it radio urls to play
+    /// </summary>
 	public class BunnyMessenger : MessengerWrapper
     {
         #region Variables
@@ -23,34 +35,34 @@ namespace org.theGecko.BunnyBot
 
         #region Properties
 
-        public string Name
-		{
-			get
-			{
-				return _name;
-			}
-			set
-			{
-				_name = value;
-			}
-		}
+        public String[] Names
+        {
+            get; set;
+        }
 
-		public string Message
-		{
-			get
-			{
-				return _message;
-			}
-			set
-			{
-				_message = value;
-			}
-		}
+        public override string MsnMessage
+        {
+            get
+            {
+                return SettingsUtil.Instance.GetSetting("MSNMessage", "Hi, I'm a bunny");
+            }
+        }
 
-		public String[] Names
-		{
-			get; set;
-		}
+	    public string SleepMessage
+	    {
+            get
+            {
+                return SettingsUtil.Instance.GetSetting("SleepMessage", "#bunnyname# is asleep");
+            }
+	    }
+
+        public String DefaultVoice
+        {
+            get
+            {
+                return SettingsUtil.Instance.GetSetting("DefaultVoice", "UK-Mistermuggles");
+            }
+        }
 
 		public Dictionary<String, String> MessageTemplates
 		{
@@ -69,29 +81,14 @@ namespace org.theGecko.BunnyBot
 			}
 		}
 
-		public String DefaultVoice
-		{
-			get; set;
-		}
-
-		public String SleepMessage
-		{
-			get; set;
-		}
-
 		#endregion
 
 		public BunnyMessenger(string serialId, string tokenId, string msnUsername, string msnPassword) : base(msnUsername, msnPassword)
 		{
-			_bunny = new NabaztagApi(serialId, tokenId);
+			_bunny = new NabaztagApi(serialId, tokenId);			
+			MsnName = _bunny.Name;
 			
-			Name = _bunny.Name;
-			DefaultVoice = "UK-Penelope";
-			SleepMessage = "#bunnyname# is asleep";
 			Names = new string[0];
-
-            Message = SettingsUtil.Instance.GetSetting("MSNMessage");
-            DefaultVoice = SettingsUtil.Instance.GetSetting("DefaultVoice", "UK-Penelope");
 
 			foreach (string language in _bunny.GetSupportedLanguages())
 			{
@@ -197,7 +194,8 @@ namespace org.theGecko.BunnyBot
 			CheckTemplates(ref message);
 			CheckNames(ref message);
 			CheckJoke(ref message);
-			return message;
+            CheckQuote(ref message);
+            return message;
 		}
 
 		private void CheckTemplates(ref string message)
@@ -227,7 +225,7 @@ namespace org.theGecko.BunnyBot
 
             if (MessageContainsTemplate(message, "bunnyname"))
             {
-                ReplaceMessageTemplate(ref message, "bunnyname", Name);
+                ReplaceMessageTemplate(ref message, "bunnyname", MsnName);
                 Log.Debug(string.Format("Bunny name detected: {0}", message));
             }
 		}
@@ -259,11 +257,43 @@ namespace org.theGecko.BunnyBot
 
         private void CheckJoke(ref string message)
         {
+            // JOKES
+            //Murphy's Laws - 7
+            //Q&A - 3
+            //Unnatural Laws - 18
+            //Cool Jokes - 6
+            //Blondes - 2
+            //Random(contains Adult) - 1
+            //Lawyers - 5
+            //Headlines - 8
+            //Military - 9
+            //Accidents - 4
+            //Excuses - 10
+            //Answering machine - 11
+            //All categories - 0
+
             if (MessageContainsTemplate(message, "joke"))
             {
                 string jokeMessage = new Jokes.getJoke().CallgetJoke("6");
                 ReplaceMessageTemplate(ref message, "joke", jokeMessage);
                 Log.Debug(string.Format("Joke message detected: {0}", message));
+            }
+        }
+
+        private void CheckQuote(ref string message)
+        {
+            if (MessageContainsTemplate(message, "quote"))
+            {
+                string quoteMessage = new Quote.QuoteofTheDay().GetQuote().QuoteOfTheDay;
+                ReplaceMessageTemplate(ref message, "quote", quoteMessage);
+                Log.Debug(string.Format("Quote message detected: {0}", message));
+            }
+
+            if (message.Contains("#quote#"))
+            {
+                string quoteMessage = new Jokes.getJoke().CallgetJoke("0");
+                message = message.Replace("#quote#", quoteMessage);
+                Log.Debug(string.Format("Quote message detected: {0}", message));
             }
         }
 
@@ -290,41 +320,5 @@ namespace org.theGecko.BunnyBot
                 message = message.Replace(string.Format(template, messageTemplate.ToLower()), templateMessage);
             }
         }
-
-		//private void CheckQuote(ref string message)
-		//{
-		//    if (message.Contains("#quote#"))
-		//    {
-		//        string quoteMessage = new Jokes.getJoke().CallgetJoke("0");
-		//        message = message.Replace("#quote#", quoteMessage);
-        //        Log.Debug(string.Format("Quote message detected: {0}", message));
-		//    }
-		//}
-	}
+    }
 }
-
-// pluggable messaging system
-// add logging
-// more #random.. settings
-// horroscopes/quotes
-// #timer#
-// wcf/web service versions
-
-// set image?
-// send it mp3 files to play
-// send it radio urls to play?
-
-// JOKES
-//Murphy's Laws - 7
-//Q&A - 3
-//Unnatural Laws - 18
-//Cool Jokes - 6
-//Blondes - 2
-//Random(contains Adult) - 1
-//Lawyers - 5
-//Headlines - 8
-//Military - 9
-//Accidents - 4
-//Excuses - 10
-//Answering machine - 11
-//All categories - 0
