@@ -52,6 +52,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="EnumUtil.cs" />
+    <Compile Include="DelegateUtil.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="SettingsUtil.cs" />
     <Compile Include="WcfChannelFactoryWrapper.cs" />

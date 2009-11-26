@@ -104,7 +104,8 @@ namespace org.theGecko.BunnyBot
 		{
 			if (_bunny.IsSleeping)
 			{
-				string message = ParseMessage(SleepMessage);
+			    string message = SleepMessage;
+                ParseMessage(ref message);
 				e.Conversation.Switchboard.SendTextMessage(new TextMessage(message));
 			}
 			else
@@ -116,15 +117,17 @@ namespace org.theGecko.BunnyBot
 		protected override void SwitchboardTextMessageReceived(object sender, TextMessageEventArgs e)
 		{
 			base.SwitchboardTextMessageReceived(sender, e);
-			string message = ParseMessage(e.Message.Text.ToLower());
-			SendMessage(message);
+			string message = e.Message.Text.ToLower();
+            int delay = ParseMessage(ref message);
+            SendMessage(message, delay);
 		}
 
 		protected override void OimServiceOimReceived(object sender, OIMReceivedEventArgs e)
 		{
 			base.OimServiceOimReceived(sender, e);
-			string message = ParseMessage(e.Message.ToLower());
-			SendMessage(message);
+			string message = e.Message.ToLower();
+            int delay = ParseMessage(ref message);
+            SendMessage(message, delay);
 		}
 
 		#endregion
@@ -165,11 +168,32 @@ namespace org.theGecko.BunnyBot
 
 		#endregion
 
-		public void SendMessage(string message)
+        /// <summary>
+        /// Plays a message on bunny
+        /// </summary>
+        /// <param name="message">Message to play</param>
+        /// <param name="delay">Delay in minutes</param>
+        public void SendMessage(string message, int delay)
 		{
-			string voice = GetVoice(ref message);
-			_bunny.SendAction(new TextToSpeechAction(message, voice));
+            if (delay > 0)
+            {
+                DelegateUtil.SetTimeout(() => SendMessage(message), delay * 1000 * 60);
+            }
+            else
+            {
+                SendMessage(message);
+            }
 		}
+
+        /// <summary>
+        /// Plays a message on bunny
+        /// </summary>
+        /// <param name="message">Message to play</param>
+        public void SendMessage(string message)
+        {
+            string voice = GetVoice(ref message);
+            _bunny.SendAction(new TextToSpeechAction(message, voice));
+        }
 
 		private string GetVoice(ref string message)
 		{
@@ -189,13 +213,14 @@ namespace org.theGecko.BunnyBot
 			return result;
 		}
 
-		private string ParseMessage(string message)
+        private int ParseMessage(ref string message)
 		{
+            // Check templates first in case they have a timer
 			CheckTemplates(ref message);
 			CheckNames(ref message);
 			CheckJoke(ref message);
             CheckQuote(ref message);
-            return message;
+            return CheckTimer(ref message);
 		}
 
 		private void CheckTemplates(ref string message)
@@ -288,13 +313,26 @@ namespace org.theGecko.BunnyBot
                 ReplaceMessageTemplate(ref message, "quote", quoteMessage);
                 Log.Debug(string.Format("Quote message detected: {0}", message));
             }
+        }
 
-            if (message.Contains("#quote#"))
+        private int CheckTimer(ref string message)
+        {
+            string timerMessage;
+
+            // This is a bit hacky, move it to regex
+            for (int i = 1; i <= 30; i++)
             {
-                string quoteMessage = new Jokes.getJoke().CallgetJoke("0");
-                message = message.Replace("#quote#", quoteMessage);
-                Log.Debug(string.Format("Quote message detected: {0}", message));
+                timerMessage = string.Format("delay({0})", i);
+                if (MessageContainsTemplate(message, timerMessage))
+                {
+                    ReplaceMessageTemplate(ref message, timerMessage, string.Empty);
+                    Log.Debug(string.Format("Timeout message detected: {0}", message));
+
+                    return i;
+                }
             }
+
+            return 0;
         }
 
 	    private bool MessageContainsTemplate(string message, string messageTemplate)
