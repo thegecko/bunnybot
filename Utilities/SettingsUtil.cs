@@ -69,6 +69,7 @@ namespace org.theGecko.Utilities
         private NameValueCollection GetSettings()
         {
 	        // Default section
+            ConfigurationManager.RefreshSection("appSettings");
             NameValueCollection settings = new NameValueCollection(ConfigurationManager.AppSettings);
 			
 			// Read the environment variable
@@ -77,6 +78,7 @@ namespace org.theGecko.Utilities
 			// Merge environment
 			if (!string.IsNullOrEmpty(environment))
 			{
+			    ConfigurationManager.RefreshSection(environment);
                 OverrideSections(settings, (NameValueCollection)ConfigurationManager.GetSection(environment), true);
 			}
 
