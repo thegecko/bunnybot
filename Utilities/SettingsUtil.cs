@@ -12,11 +12,7 @@ namespace org.theGecko.Utilities
 		#region Singleton
 
 		private static readonly SettingsUtil _Instance = new SettingsUtil();
-
-		// Explicit static constructor to tell C# compiler not to mark type as beforefieldinit
-		static SettingsUtil()
-		{
-		}
+        private static readonly SettingsUtil _CachedInstance = new SettingsUtil(true);
 
 		public static SettingsUtil Instance
 		{
@@ -26,25 +22,62 @@ namespace org.theGecko.Utilities
 			}
 		}
 
-		#endregion
+        public static SettingsUtil Cached
+        {
+            get
+            {
+                return _CachedInstance;
+            }
+        }
+
+		// Explicit static constructor to tell C# compiler not to mark type as beforefieldinit
+		static SettingsUtil()
+		{
+		}
+        
+        #endregion
 
 		#region Settings Section
 
 		// Internal settings section
-		private NameValueCollection _SettingsSection = null;
+		private readonly NameValueCollection _SettingsSection;
+	    private NameValueCollection SettingsSection
+	    {
+	        get
+	        {
+	            if (_SettingsSection != null)
+	            {
+	                return _SettingsSection;
+	            }
+
+	            return GetSettings();
+	        }
+	    }
 
 		public SettingsUtil()
 		{
-			// Default section 
-			_SettingsSection = new NameValueCollection(ConfigurationManager.AppSettings);
+		}
+
+        public SettingsUtil(bool cached)
+        {
+            if (cached)
+            {
+                _SettingsSection = GetSettings();
+            }
+        }
+
+        private NameValueCollection GetSettings()
+        {
+	        // Default section
+            NameValueCollection settings = new NameValueCollection(ConfigurationManager.AppSettings);
 			
 			// Read the environment variable
-			string environment = _SettingsSection.Get("Environment");
+            string environment = settings.Get("Environment");
 
 			// Merge environment
 			if (!string.IsNullOrEmpty(environment))
 			{
-				OverrideSections(_SettingsSection, (NameValueCollection)ConfigurationManager.GetSection(environment), true);
+                OverrideSections(settings, (NameValueCollection)ConfigurationManager.GetSection(environment), true);
 			}
 
 #if DEBUG
@@ -60,9 +93,10 @@ namespace org.theGecko.Utilities
 				IConfigurationSectionHandler handler = new NameValueSectionHandler();
 				NameValueCollection overrideConfig = (NameValueCollection)handler.Create(null, null, xmlDoc.SelectSingleNode("//appSettings"));
 
-				OverrideSections(_SettingsSection, overrideConfig, false);
+                OverrideSections(settings, overrideConfig, false);
 			}
 #endif
+            return settings;
 		}
 
 		private void OverrideSections(NameValueCollection target, NameValueCollection source, bool merge)
@@ -104,11 +138,11 @@ namespace org.theGecko.Utilities
 		/// <returns>String[] result of setting</returns>
 		public String[] GetArraySetting(string setting, char delimeter)
 		{
-			string Value = GetSetting(setting).ToString();
+			string value = GetSetting(setting);
 
-			if (Value != String.Empty)
+			if (value != String.Empty)
 			{
-				return Value.ToLower().Split(delimeter);
+				return value.ToLower().Split(delimeter);
 			}
 
 			return new string[] { };
@@ -149,7 +183,7 @@ namespace org.theGecko.Utilities
 		/// <returns>Value of setting</returns>
 		public T GetSetting<T>(string setting)
 		{
-			return GetSetting<T>(setting, default(T));
+			return GetSetting(setting, default(T));
 		}
 
 		/// <summary>
@@ -162,7 +196,7 @@ namespace org.theGecko.Utilities
 		public T GetSetting<T>(string setting, T defaultValue)
 		{
 			// Get the setting value from the section
-			string value = _SettingsSection.Get(setting);
+			string value = SettingsSection.Get(setting);
 
 			// Return it if found
 			if (value != null)

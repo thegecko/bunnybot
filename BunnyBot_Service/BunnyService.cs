@@ -16,10 +16,11 @@ namespace org.theGecko.BunnyBot
 
 		public void StartService()
 		{
-			_bunny = new BunnyMessenger(SettingsUtil.Instance.GetSetting("SerialID"),
-			                                          SettingsUtil.Instance.GetSetting("TokenID"),
-			                                          SettingsUtil.Instance.GetSetting("MSNUsername"),
-			                                          SettingsUtil.Instance.GetSetting("MSNPassword"));
+			_bunny = new BunnyMessenger(
+                SettingsUtil.Cached.GetSetting("SerialID"),
+                SettingsUtil.Cached.GetSetting("TokenID"),
+                SettingsUtil.Cached.GetSetting("MSNUsername"),
+                SettingsUtil.Cached.GetSetting("MSNPassword"));
 
 			_workerThread = new Thread(_bunny.StartThread);
 			_workerThread.Start();

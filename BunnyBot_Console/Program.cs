@@ -11,7 +11,11 @@ namespace org.theGecko.BunnyBot_Console
 		{
             XmlConfigurator.Configure();
 
-			using (BunnyMessenger bunny = new BunnyMessenger(SettingsUtil.Instance.GetSetting("SerialID"), SettingsUtil.Instance.GetSetting("TokenID"), SettingsUtil.Instance.GetSetting("MSNUsername"), SettingsUtil.Instance.GetSetting("MSNPassword")))
+			using (BunnyMessenger bunny = new BunnyMessenger(
+                SettingsUtil.Cached.GetSetting("SerialID"),
+                SettingsUtil.Cached.GetSetting("TokenID"),
+                SettingsUtil.Cached.GetSetting("MSNUsername"),
+                SettingsUtil.Cached.GetSetting("MSNPassword")))
 			{
 				bunny.Start();
 
