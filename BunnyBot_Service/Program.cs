@@ -1,5 +1,6 @@
 ﻿using System;
 using System.ServiceProcess;
+using log4net;
 using log4net.Config;
 using org.theGecko.BunnyBot;
 
@@ -7,6 +8,8 @@ namespace org.theGecko.BunnyBot_Service
 {
 	class Program
 	{
+        private static readonly ILog Log = LogManager.GetLogger(typeof(Program));
+
 		static void Main(string[] args)
 		{
             XmlConfigurator.Configure();
@@ -17,8 +20,8 @@ namespace org.theGecko.BunnyBot_Service
 			{
 				bunnyService.StartService();
 
-				Console.WriteLine("Press any key to exit");
-				Console.ReadKey();
+                Console.WriteLine("Press any key to exit");
+                Console.ReadKey();
 			
 				bunnyService.StopService();
 			}

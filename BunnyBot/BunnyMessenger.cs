@@ -2,32 +2,20 @@
 using System.Collections.Generic;
 using System.Text.RegularExpressions;
 using System.Threading;
+using log4net;
 using MSNPSharp;
 using org.theGecko.Utilities;
 using Q42.Wheels.Api.Nabaztag;
-using log4net;
 
 namespace org.theGecko.BunnyBot
 {
-    /// <summary>
-    /// Ideas:
-    /// ------
-    /// pluggable messaging system
-    /// more #random.. settings
-    /// horroscopes
-    /// #timer# for tea brewing
-    /// wcf/web service versions
-    /// set image
-    /// send it mp3 files to play
-    /// send it radio urls to play
-    /// </summary>
 	public class BunnyMessenger : MessengerWrapper
     {
         #region Variables
 
         private static readonly ILog Log = LogManager.GetLogger(typeof(BunnyMessenger));
         private readonly string[] _searchTemplates = new[] { "#{0}#", "#{0}" };
-		private readonly NabaztagApi _bunny;
+        private readonly NabaztagApiExtension _bunny;
 		private readonly List<String> _voices = new List<string>();
 		private bool _threadRunning;
 
@@ -44,7 +32,9 @@ namespace org.theGecko.BunnyBot
         {
             get
             {
-                return SettingsUtil.Instance.GetSetting("MSNMessage", "Hi, I'm a bunny");
+                string message = SettingsUtil.Instance.GetSetting("MSNMessage", "Hi, I'm #bunnyname#");
+                ParseMessage(ref message);
+                return message;
             }
         }
 
@@ -52,7 +42,9 @@ namespace org.theGecko.BunnyBot
 	    {
             get
             {
-                return SettingsUtil.Instance.GetSetting("SleepMessage", "#bunnyname# is asleep");
+                string message = SettingsUtil.Instance.GetSetting("SleepMessage", "#bunnyname# is asleep");
+                ParseMessage(ref message);
+                return message;
             }
 	    }
 
@@ -85,7 +77,7 @@ namespace org.theGecko.BunnyBot
 
 		public BunnyMessenger(string serialId, string tokenId, string msnUsername, string msnPassword) : base(msnUsername, msnPassword)
 		{
-			_bunny = new NabaztagApi(serialId, tokenId);			
+            _bunny = new NabaztagApiExtension(serialId, tokenId);			
 			MsnName = _bunny.Name;
 			
 			Names = new string[0];
@@ -95,93 +87,84 @@ namespace org.theGecko.BunnyBot
 				_voices.AddRange(_bunny.GetSupportedVoices(language));
 			}
 
-            Log.Debug(string.Format("Loaded {0} voices", _voices.Count));
-		}
-
-		#region Overridden Event Handlers
-
-		protected override void MessengerConversationCreated(object sender, ConversationCreatedEventArgs e)
-		{
-			if (_bunny.IsSleeping)
-			{
-			    string message = SleepMessage;
-                ParseMessage(ref message);
-				e.Conversation.Switchboard.SendTextMessage(new TextMessage(message));
-			}
-			else
-			{
-				base.MessengerConversationCreated(sender, e);
-			}
+            Log.Info(string.Format("Loaded {0} voices", _voices.Count));
 		}
 
 		protected override void SwitchboardTextMessageReceived(object sender, TextMessageEventArgs e)
 		{
-			base.SwitchboardTextMessageReceived(sender, e);
-			string message = e.Message.Text.ToLower();
-            int delay = ParseMessage(ref message);
-            SendMessage(message, delay);
+            base.SwitchboardTextMessageReceived(sender, e);
+
+            if (sender is SBMessageHandler)
+            {
+                SBMessageHandler switchboard = sender as SBMessageHandler;
+
+                if (_bunny.IsSleeping)
+                {
+                    SendMsnMessage(switchboard, SleepMessage);
+                }
+                else
+                {
+                    ParseAndSendMessage(switchboard, e.Message.Text);
+                }
+            }
 		}
 
-		protected override void OimServiceOimReceived(object sender, OIMReceivedEventArgs e)
-		{
-			base.OimServiceOimReceived(sender, e);
-			string message = e.Message.ToLower();
-            int delay = ParseMessage(ref message);
-            SendMessage(message, delay);
-		}
+        /// <summary>
+        /// Parses a message and plays it on bunny
+        /// </summary>
+        /// <param name="message">Message to parse and play</param>
+        public void ParseAndSendMessage(SBMessageHandler switchboard, string message)
+        {
+            message = message.ToLower();
+            ParseMessage(ref message);
+            int delay = GetDelay(ref message);
+            message = message.Trim();
 
-		#endregion
+            if (delay > 0)
+            {
+                SendMsnMessage(switchboard, string.Format("In {0} minutes: {1}", delay, message));
+            }
+            else
+            {
+                SendMsnMessage(switchboard, message);
+            }
 
-		#region Threading
+            // Check for a url
+            if (message.StartsWith("http://"))
+            {
+                SendBunnyUrl(message, delay);
+            }
+            else
+            {
+                SendBunnyMessage(message, delay);
+            }
+        }
 
-		public void StartThread()
-		{
-			_threadRunning = true;
-
-			while (_threadRunning)
-			{
-				try
-				{
-					if (_bunny.IsSleeping)
-					{
-						Stop();
-					}
-					else
-					{
-						Start();
-					}
-				}
-				catch (Exception e)
-				{
-                    Log.Error("Error polling bunny", e);
-				}
-
-				Thread.Sleep(30000);
-			}
-		}
-
-		public void StopThread()
-		{
-			_threadRunning = false;
-			Stop();
-		}
-
-		#endregion
+        /// <summary>
+        /// Speaks on MSN
+        /// </summary>
+        /// <param name="switchboard">MSN conversation switchboard</param>
+        /// <param name="message">Message to send</param>
+        private void SendMsnMessage(SBMessageHandler switchboard, string message)
+        {
+            switchboard.SendTextMessage(new TextMessage(message));
+            Log.Info(string.Format("msn: {0}", message));
+        }
 
         /// <summary>
         /// Plays a message on bunny
         /// </summary>
         /// <param name="message">Message to play</param>
         /// <param name="delay">Delay in minutes</param>
-        public void SendMessage(string message, int delay)
+        public void SendBunnyMessage(string message, int delay)
 		{
             if (delay > 0)
             {
-                DelegateUtil.SetTimeout(() => SendMessage(message), delay * 1000 * 60);
+                DelegateUtil.SetTimeout(() => SendBunnyMessage(message), delay * 1000 * 60);
             }
             else
             {
-                SendMessage(message);
+                SendBunnyMessage(message);
             }
 		}
 
@@ -189,40 +172,50 @@ namespace org.theGecko.BunnyBot
         /// Plays a message on bunny
         /// </summary>
         /// <param name="message">Message to play</param>
-        public void SendMessage(string message)
+        private void SendBunnyMessage(string message)
         {
             string voice = GetVoice(ref message);
             _bunny.SendAction(new TextToSpeechAction(message, voice));
+            Log.Info(string.Format("{0}: {1}", MsnName, message));
         }
 
-		private string GetVoice(ref string message)
-		{
-			string result = DefaultVoice;
+        /// <summary>
+        /// Tells bunny to stream some music
+        /// </summary>
+        /// <param name="message">Url to play</param>
+        /// <param name="delay">Delay in minutes</param>
+        public void SendBunnyUrl(string url, int delay)
+        {
+            if (delay > 0)
+            {
+                DelegateUtil.SetTimeout(() => SendBunnyUrl(url), delay * 1000 * 60);
+            }
+            else
+            {
+                SendBunnyUrl(url);
+            }
+        }
 
-            foreach (string supportedVoice in _voices)
-			{
-                if (MessageContainsTemplate(message, supportedVoice))
-                {
-                    ReplaceMessageTemplate(ref message, supportedVoice, string.Empty);
-					result = supportedVoice;
-				}
-			}
+        /// <summary>
+        /// Tells bunny to stream some music
+        /// </summary>
+        /// <param name="message">Url to play</param>
+        private void SendBunnyUrl(string url)
+        {
+            _bunny.SendStreamAction(new UrlListAction(url));
+            Log.Info(string.Format("url: {0}", url));
+        }
 
-            Log.Debug(string.Format("Voice set to: {0}", result));
+        #region Parse Checks
 
-			return result;
-		}
-
-        private int ParseMessage(ref string message)
-		{
-            // Check templates first in case they have a timer
-			CheckTemplates(ref message);
-			CheckNames(ref message);
-			CheckJoke(ref message);
+        private void ParseMessage(ref string message)
+        {
+            CheckTemplates(ref message);
+            CheckNames(ref message);
+            CheckJoke(ref message);
             CheckQuote(ref message);
-            return CheckTimer(ref message);
-		}
-
+        }
+                
 		private void CheckTemplates(ref string message)
 		{
 			foreach (string messageTemplate in MessageTemplates.Keys)
@@ -254,31 +247,6 @@ namespace org.theGecko.BunnyBot
                 Log.Debug(string.Format("Bunny name detected: {0}", message));
             }
 		}
-
-		private List<string> GetAvailableContacts()
-		{
-			List<string> contacts = GetContacts(PresenceStatus.Online);
-			contacts.AddRange(GetContacts(PresenceStatus.Away));
-			contacts.AddRange(GetContacts(PresenceStatus.Busy));
-			contacts.AddRange(GetContacts(PresenceStatus.Idle));
-
-			return contacts;
-		}
-
-		private List<string> GetContacts(PresenceStatus status)
-		{
-			List<string> contacts = new List<string>();
-
-			foreach (Contact contact in _messenger.ContactList.All)
-			{
-				if (contact.Status == status)
-				{
-					contacts.Add(Regex.Replace(contact.Name, @"[^A-Za-z0-9]", ""));
-				}
-			}
-
-			return contacts;
- 		}
 
         private void CheckJoke(ref string message)
         {
@@ -315,18 +283,22 @@ namespace org.theGecko.BunnyBot
             }
         }
 
-        private int CheckTimer(ref string message)
+        #endregion
+
+        #region Parse Gets
+       
+        private int GetDelay(ref string message)
         {
             string timerMessage;
 
-            // This is a bit hacky, move it to regex
+            // This is a bit hacky, move it to a regex
             for (int i = 1; i <= 30; i++)
             {
                 timerMessage = string.Format("delay({0})", i);
                 if (MessageContainsTemplate(message, timerMessage))
                 {
                     ReplaceMessageTemplate(ref message, timerMessage, string.Empty);
-                    Log.Debug(string.Format("Timeout message detected: {0}", message));
+                    Log.Debug(string.Format("Delay detected: {0}", message));
 
                     return i;
                 }
@@ -335,7 +307,29 @@ namespace org.theGecko.BunnyBot
             return 0;
         }
 
-	    private bool MessageContainsTemplate(string message, string messageTemplate)
+        private string GetVoice(ref string message)
+        {
+            string result = DefaultVoice;
+
+            foreach (string supportedVoice in _voices)
+            {
+                if (MessageContainsTemplate(message, supportedVoice))
+                {
+                    ReplaceMessageTemplate(ref message, supportedVoice, string.Empty);
+                    result = supportedVoice;
+                }
+            }
+
+            Log.Debug(string.Format("Voice set to: {0}", result));
+
+            return result;
+        }
+
+        #endregion
+
+        #region Helper Methods
+
+        private bool MessageContainsTemplate(string message, string messageTemplate)
         {
             bool found = false;
 
@@ -358,5 +352,68 @@ namespace org.theGecko.BunnyBot
                 message = message.Replace(string.Format(template, messageTemplate.ToLower()), templateMessage);
             }
         }
+
+        private List<string> GetAvailableContacts()
+        {
+            List<string> contacts = GetContacts(PresenceStatus.Online);
+            contacts.AddRange(GetContacts(PresenceStatus.Away));
+            contacts.AddRange(GetContacts(PresenceStatus.Busy));
+            contacts.AddRange(GetContacts(PresenceStatus.Idle));
+
+            return contacts;
+        }
+
+        private List<string> GetContacts(PresenceStatus status)
+        {
+            List<string> contacts = new List<string>();
+
+            foreach (Contact contact in _messenger.ContactList.All)
+            {
+                if (contact.Status == status)
+                {
+                    contacts.Add(Regex.Replace(contact.Name, @"[^A-Za-z0-9]", ""));
+                }
+            }
+
+            return contacts;
+        }
+
+        #endregion
+
+        #region IService Members
+
+        public override void Start()
+        {
+            _threadRunning = true;
+
+            while (_threadRunning)
+            {
+                try
+                {
+                    if (_bunny.IsSleeping)
+                    {
+                        base.Stop();
+                    }
+                    else
+                    {
+                        base.Start();
+                    }
+                }
+                catch (Exception e)
+                {
+                    Log.Error("Error polling bunny", e);
+                }
+
+                Thread.Sleep(30000);
+            }
+        }
+
+        public override void Stop()
+        {
+            _threadRunning = false;
+            base.Stop();
+        }
+
+        #endregion
     }
 }

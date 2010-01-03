@@ -22,14 +22,16 @@ namespace org.theGecko.BunnyBot
                 SettingsUtil.Cached.GetSetting("MSNUsername"),
                 SettingsUtil.Cached.GetSetting("MSNPassword"));
 
-			_workerThread = new Thread(_bunny.StartThread);
+            _bunny.MsnImagePath = SettingsUtil.Instance.GetSetting("MsnImage");
+
+			_workerThread = new Thread(_bunny.Start);
 			_workerThread.Start();
 		}
 
 		public void StopService()
 		{
-			_bunny.StopThread();
-			_workerThread.Join(60000);
+			_bunny.Stop();
+			_workerThread.Join(10000);
 
 			if (_bunny != null)
 			{

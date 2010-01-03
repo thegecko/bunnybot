@@ -28,26 +28,25 @@
 		/// </summary>
 		private void InitializeComponent()
 		{
-			this.BunnyBotProcessInstaller = new System.ServiceProcess.ServiceProcessInstaller();
-			this.BunnyBotInstaller = new System.ServiceProcess.ServiceInstaller();
-			// 
-			// BunnyBotProcessInstaller
-			// 
-			this.BunnyBotProcessInstaller.Account = System.ServiceProcess.ServiceAccount.LocalSystem;
-			this.BunnyBotProcessInstaller.Password = null;
-			this.BunnyBotProcessInstaller.Username = null;
-			// 
-			// BunnyBotInstaller
-			// 
-			this.BunnyBotInstaller.Description = "Nabaztag messenger bot";
-			this.BunnyBotInstaller.DisplayName = "BunnyBot";
-			this.BunnyBotInstaller.ServiceName = "BunnyBot";
-			this.BunnyBotInstaller.StartType = System.ServiceProcess.ServiceStartMode.Automatic;
-			this.BunnyBotInstaller.AfterInstall += new System.Configuration.Install.InstallEventHandler(this.serviceInstaller1_AfterInstall);
-			// 
-			// ProjectInstaller
-			// 
-			this.Installers.AddRange(new System.Configuration.Install.Installer[] {
+            this.BunnyBotProcessInstaller = new System.ServiceProcess.ServiceProcessInstaller();
+            this.BunnyBotInstaller = new System.ServiceProcess.ServiceInstaller();
+            // 
+            // BunnyBotProcessInstaller
+            // 
+            this.BunnyBotProcessInstaller.Account = System.ServiceProcess.ServiceAccount.LocalSystem;
+            this.BunnyBotProcessInstaller.Password = null;
+            this.BunnyBotProcessInstaller.Username = null;
+            // 
+            // BunnyBotInstaller
+            // 
+            this.BunnyBotInstaller.Description = "Nabaztag messenger bot";
+            this.BunnyBotInstaller.DisplayName = "BunnyBot";
+            this.BunnyBotInstaller.ServiceName = "BunnyBot";
+            this.BunnyBotInstaller.StartType = System.ServiceProcess.ServiceStartMode.Automatic;
+            // 
+            // ProjectInstaller
+            // 
+            this.Installers.AddRange(new System.Configuration.Install.Installer[] {
             this.BunnyBotProcessInstaller,
             this.BunnyBotInstaller});
 

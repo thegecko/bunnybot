@@ -1,11 +1,14 @@
 ﻿using System;
+using System.Drawing;
+using System.IO;
 using System.Threading;
 using log4net;
 using MSNPSharp;
+using org.theGecko.Utilities;
 
 namespace org.theGecko.BunnyBot
 {
-	public class MessengerWrapper : IDisposable
+    public class MessengerWrapper : IDisposable, IService
     {
         #region Variables
 
@@ -26,6 +29,33 @@ namespace org.theGecko.BunnyBot
             get; set;
         }
 
+        public virtual string MsnImagePath
+        {
+            set
+            {
+                if (!string.IsNullOrEmpty(value))
+                {
+                    try
+                    {
+                        MsnImage = Image.FromFile(value);
+                    }
+                    catch (FileNotFoundException e)
+                    {
+                        Log.Error(string.Format("File does not exist: {0}", value));
+                    }
+                    catch (Exception e)
+                    {
+                        Log.Error(string.Format("MsnImage error: {0}", e.Message));
+                    }
+                }
+            }
+        }
+
+        public virtual Image MsnImage
+        {
+            get; set;
+        }
+
 	    #endregion
 
         #region Constructors
@@ -41,53 +71,35 @@ namespace org.theGecko.BunnyBot
 			_messenger = new Messenger
          		{
          			Nameserver = {AutoSynchronize = true},
-         			Credentials = new Credentials(msnUsername, msnPassword, MsnProtocol.MSNP15)
+         			Credentials = new Credentials(msnUsername, msnPassword, MsnProtocol.MSNP18),
          		};
 
 			_messenger.NameserverProcessor.ConnectionEstablished += NameserverProcessorConnectionEstablished;
 			_messenger.NameserverProcessor.ConnectionClosed += NameserverProcessorConnectionClosed;
-			_messenger.Nameserver.Owner.ScreenNameChanged += OwnerScreenNameChanged;
-			_messenger.Nameserver.Owner.PersonalMessageChanged += OwnerPersonalMessageChanged;
-			// _messenger.Nameserver.Owner.DisplayImageChanged += Owner_DisplayImageChanged;
+            _messenger.Nameserver.Owner.ScreenNameChanged += OwnerScreenNameChanged;
+            _messenger.Nameserver.Owner.PersonalMessageChanged += OwnerPersonalMessageChanged;
+
 			_messenger.Nameserver.SignedIn += NameserverSignedIn;
 			_messenger.Nameserver.SignedOff += NameserverSignedOff;
-			_messenger.Nameserver.ContactService.ReverseAdded += ContactServiceReverseAdded;
 			_messenger.Nameserver.ContactOnline += NameserverContactOnline;
 			_messenger.Nameserver.ContactOffline += NameserverContactOffline;
 			_messenger.Nameserver.ContactStatusChanged += NameserverContactStatusChanged;
 			_messenger.ConversationCreated += MessengerConversationCreated;
 			_messenger.OIMService.OIMReceived += OimServiceOimReceived;
-			// _messenger.TransferInvitationReceived
+            _messenger.ContactService.ReverseAdded += ContactServiceReverseAdded;
+            _messenger.ContactService.ReverseRemoved += ContactServiceReverseRemoved;
 
 			_messenger.NameserverProcessor.ConnectingException += MessengerException;
-			_messenger.NameserverProcessor.ConnectionException += MessengerException;
 			_messenger.NameserverProcessor.HandlerException += MessengerException;
 			_messenger.Nameserver.ExceptionOccurred += MessengerException;
 			_messenger.Nameserver.AuthenticationError += MessengerException;
 			_messenger.Nameserver.ServerErrorReceived += MessengerError;
 			_messenger.ContactService.ServiceOperationFailed += OperationFailed;
 			_messenger.OIMService.ServiceOperationFailed += OperationFailed;
-			_messenger.SpaceService.ServiceOperationFailed += OperationFailed;
 			_messenger.StorageService.ServiceOperationFailed += OperationFailed;
 		}
 
 		#endregion
-
-		public virtual void Start()
-		{
-			if (!_messenger.Connected)
-			{
-				_messenger.Connect();
-			}
-		}
-
-		public virtual void Stop()
-		{
-			if (_messenger.Connected)
-			{
-				_messenger.Disconnect();
-			}
-		}
 
 		#region Event Handlers
 
@@ -118,25 +130,33 @@ namespace org.theGecko.BunnyBot
 
 		protected virtual void OwnerScreenNameChanged(object sender, EventArgs e)
 		{
-			if (!string.IsNullOrEmpty(MsnName))
-			{
-                _messenger.Owner.Name = MsnName;
-                Log.Debug(string.Format("Name set to: {0}", _messenger.Owner.Name));
-			}
+            Log.Debug(string.Format("Name set to: {0}", _messenger.Owner.Name));
 		}
 
 		protected virtual void OwnerPersonalMessageChanged(object sender, EventArgs e)
 		{
-			if (!string.IsNullOrEmpty(MsnMessage))
-			{
-                _messenger.Owner.PersonalMessage.Message = MsnMessage;
-                Log.Debug(string.Format("Message set to: {0}", _messenger.Owner.PersonalMessage.Message));
-			}
+            Log.Debug(string.Format("Message set to: {0}", _messenger.Owner.PersonalMessage.Message));
 		}
 
 		protected virtual void NameserverSignedIn(object sender, EventArgs e)
 		{
-			_messenger.Owner.Status = PresenceStatus.Online;
+            if (!string.IsNullOrEmpty(MsnName))
+            {
+                _messenger.Nameserver.Owner.Name = MsnName;
+            }
+
+            if (!string.IsNullOrEmpty(MsnMessage))
+            {
+                _messenger.Nameserver.Owner.PersonalMessage = new PersonalMessage(MsnMessage, MediaType.None, null, NSMessageHandler.MachineGuid);
+            }
+
+            if (MsnImage != null)
+            {
+                _messenger.Nameserver.StorageService.UpdateProfile(MsnImage, "MyPhoto");
+            }
+
+            _messenger.Nameserver.Owner.NotifyPrivacy = NotifyPrivacy.AutomaticAdd;
+            _messenger.Nameserver.Owner.Status = PresenceStatus.Online;
             Log.Info(string.Format("Signed in as: {0}", _messenger.Owner.Name));
 		}
 
@@ -145,11 +165,21 @@ namespace org.theGecko.BunnyBot
             Log.Info("Signed out");
 		}
 
-		protected virtual void ContactServiceReverseAdded(object sender, ContactEventArgs e)
+        protected virtual void ContactServiceReverseAdded(object sender, ContactEventArgs e)
+        {
+            if (e.Contact != null)
+            {
+                Log.Info(string.Format("{0} added to contacts", e.Contact.Mail));
+            }
+        }
+
+		protected virtual void ContactServiceReverseRemoved(object sender, ContactEventArgs e)
 		{
-			_messenger.Nameserver.ContactService.AddNewContact(e.Contact.Mail);
-            Log.Info(string.Format("{0} added to contacts", e.Contact.Mail));
-		}
+            if (e.Contact != null)
+            {
+                Log.Info(string.Format("{0} removed from contacts", e.Contact.Mail));
+            }
+        }
 
 		protected virtual void NameserverContactOnline(object sender, ContactEventArgs e)
 		{
@@ -161,7 +191,7 @@ namespace org.theGecko.BunnyBot
             Log.Debug(string.Format("{0}: Offline", e.Contact.Mail));
 		}
 
-		protected virtual void NameserverContactStatusChanged(object sender, ContactStatusChangeEventArgs e)
+        protected virtual void NameserverContactStatusChanged(object sender, ContactStatusChangedEventArgs e)
 		{
             Log.Debug(string.Format("{0}: {1} -> {2}", e.Contact.Mail, e.OldStatus, e.Contact.Status));
 		}
@@ -178,20 +208,40 @@ namespace org.theGecko.BunnyBot
 
 		protected virtual void OimServiceOimReceived(object sender, OIMReceivedEventArgs e)
 		{
-            Log.Info(string.Format("{0}: {1}", e.Email, e.Message));
+            Log.Info(string.Format("{0} (offline): {1}", e.Email, e.Message));
 		}
 	
 		#endregion
 
-		#region IDisposable Members
+        #region IService Members
 
-		public void Dispose()
-		{
-			Stop();
+        public virtual void Start()
+        {
+            if (!_messenger.Connected)
+            {
+                _messenger.Connect();
+            }
+        }
+
+        public virtual void Stop()
+        {
+            if (_messenger.Connected)
+            {
+                _messenger.Disconnect();
+            }
+        }
+
+        #endregion
+
+        #region IDisposable Members
+
+        public void Dispose()
+        {
+            Stop();
             Log.Debug("Disposed");
-			Thread.Sleep(500);
-		}
+            Thread.Sleep(500);
+        }
 
-		#endregion
-	}
+        #endregion
+    }
 }
