@@ -1,9 +1,7 @@
 ﻿using System;
 using System.Collections.Specialized;
 using System.Configuration;
-using System.IO;
 using System.Linq;
-using System.Xml;
 
 namespace org.theGecko.Utilities
 {
@@ -216,5 +214,34 @@ namespace org.theGecko.Utilities
 		}
 
 		#endregion
+
+        #region ConfigSection Functions
+
+        /// <summary>
+        /// Returns the requested config section using the current configuration source
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <returns></returns>
+        public static T GetConfigSection<T>() where T : class
+        {
+            return GetConfigSection<T>(typeof(T).Name);
+        }
+
+        /// <summary>
+        /// Returns the requested config section using the current configuration source
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <returns></returns>
+        public static T GetConfigSection<T>(string name) where T : class
+        {
+            if (!typeof(ConfigurationSection).IsAssignableFrom(typeof(T)))
+            {
+                throw new ArgumentException("GetConfigSection only supports .Net ConfigurationSections");
+            }
+
+            return ConfigurationManager.GetSection(name) as T;
+        }
+
+        #endregion
 	}
 }

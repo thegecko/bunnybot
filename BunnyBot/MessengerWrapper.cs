@@ -169,6 +169,7 @@ namespace org.theGecko.BunnyBot
         {
             if (e.Contact != null)
             {
+                _messenger.Nameserver.ContactService.AddNewContact(e.Contact.Mail);
                 Log.Info(string.Format("{0} added to contacts", e.Contact.Mail));
             }
         }
@@ -177,6 +178,7 @@ namespace org.theGecko.BunnyBot
 		{
             if (e.Contact != null)
             {
+                _messenger.Nameserver.ContactService.RemoveContact(e.Contact);
                 Log.Info(string.Format("{0} removed from contacts", e.Contact.Mail));
             }
         }
